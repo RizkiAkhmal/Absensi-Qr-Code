@@ -31,7 +31,7 @@ class PublicScanController extends Controller
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'QR Code tidak valid atau bukan milik pegawai'
+                    'message' => 'QR Code tidak valid atau bukan milik pegawai aktif'
                 ]);
             }
 

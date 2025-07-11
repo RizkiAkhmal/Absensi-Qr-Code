@@ -58,32 +58,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Laporan
     Route::get('/laporan', [AdminController::class, 'laporan'])->name('laporan');
     Route::get('/laporan/filter', [AdminController::class, 'laporanFilter'])->name('laporan.filter');
+
+    // QR Code Generation
+    Route::get('/generate-qr', [AdminController::class, 'generateQR'])->name('generate-qr');
 });
 
 // Pegawai Routes
 Route::middleware(['auth', 'role:pegawai'])->prefix('pegawai')->name('pegawai.')->group(function () {
     Route::get('/dashboard', [PegawaiController::class, 'dashboard'])->name('dashboard');
     Route::get('/qrcode', [PegawaiController::class, 'showQRCode'])->name('qrcode');
-    Route::post('/scan-absensi', [PegawaiController::class, 'scanAbsensi'])->name('scan.absensi');
     Route::get('/absensi', [PegawaiController::class, 'absensi'])->name('absensi');
     Route::get('/jadwal', [PegawaiController::class, 'jadwal'])->name('jadwal');
 });
 
-// Test route for debugging (remove in production)
-Route::get('/test-jadwal', function() {
-    $user = \App\Models\User::where('role', 'pegawai')->first();
-    if (!$user) {
-        return 'No pegawai found';
-    }
 
-    // Create test schedule
-    \App\Models\JadwalKerja::create([
-        'id_user' => $user->id,
-        'hari' => 'Senin',
-        'jam_masuk' => '08:00',
-        'jam_pulang' => '17:00',
-        'is_libur' => false,
-    ]);
-
-    return 'Test jadwal created for ' . $user->name;
-})->middleware('auth');

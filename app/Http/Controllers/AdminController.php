@@ -19,7 +19,32 @@ class AdminController extends Controller
         $terlambatHariIni = Absensi::whereDate('tanggal', today())
                                   ->where('status', 'terlambat')->count();
 
-        return view('admin.dashboard', compact('totalPegawai', 'absensiHariIni', 'terlambatHariIni'));
+        // Absensi terbaru (5 terakhir)
+        $absensiTerbaru = Absensi::with('user')
+                                ->orderBy('created_at', 'desc')
+                                ->limit(5)
+                                ->get();
+
+        // Statistik absensi 7 hari terakhir
+        $statistikAbsensi = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $tanggal = now()->subDays($i);
+            $statistikAbsensi[] = [
+                'tanggal' => $tanggal->format('Y-m-d'),
+                'hari' => $tanggal->locale('id')->dayName,
+                'hadir' => Absensi::whereDate('tanggal', $tanggal)->where('status', 'hadir')->count(),
+                'terlambat' => Absensi::whereDate('tanggal', $tanggal)->where('status', 'terlambat')->count(),
+                'alpha' => Absensi::whereDate('tanggal', $tanggal)->where('status', 'alpha')->count(),
+            ];
+        }
+
+        return view('admin.dashboard', compact(
+            'totalPegawai',
+            'absensiHariIni',
+            'terlambatHariIni',
+            'absensiTerbaru',
+            'statistikAbsensi'
+        ));
     }
 
     public function pegawai()
@@ -300,5 +325,55 @@ class AdminController extends Controller
         $pegawai = User::where('role', 'pegawai')->get();
 
         return view('admin.laporan.index', compact('absensi', 'pegawai'));
+    }
+
+    public function generateQR(Request $request)
+    {
+        $data = $request->input('data');
+
+        if (!$data) {
+            return response('No data provided', 400);
+        }
+
+        try {
+            // Generate simple SVG QR code placeholder
+            $size = 180;
+            $cellSize = $size / 25; // 25x25 grid
+
+            $svg = '<svg width="' . $size . '" height="' . $size . '" xmlns="http://www.w3.org/2000/svg">';
+            $svg .= '<rect width="' . $size . '" height="' . $size . '" fill="white"/>';
+
+            // Create a simple pattern based on data hash
+            $hash = md5($data);
+            for ($i = 0; $i < 25; $i++) {
+                for ($j = 0; $j < 25; $j++) {
+                    $index = ($i * 25 + $j) % strlen($hash);
+                    if (hexdec($hash[$index]) % 2 == 0) {
+                        $x = $j * $cellSize;
+                        $y = $i * $cellSize;
+                        $svg .= '<rect x="' . $x . '" y="' . $y . '" width="' . $cellSize . '" height="' . $cellSize . '" fill="black"/>';
+                    }
+                }
+            }
+
+            // Add corner markers
+            $cornerSize = $cellSize * 7;
+            $corners = [
+                [0, 0], [18 * $cellSize, 0], [0, 18 * $cellSize]
+            ];
+
+            foreach ($corners as $corner) {
+                $svg .= '<rect x="' . $corner[0] . '" y="' . $corner[1] . '" width="' . $cornerSize . '" height="' . $cornerSize . '" fill="black"/>';
+                $svg .= '<rect x="' . ($corner[0] + $cellSize) . '" y="' . ($corner[1] + $cellSize) . '" width="' . ($cornerSize - 2 * $cellSize) . '" height="' . ($cornerSize - 2 * $cellSize) . '" fill="white"/>';
+                $svg .= '<rect x="' . ($corner[0] + 2 * $cellSize) . '" y="' . ($corner[1] + 2 * $cellSize) . '" width="' . ($cornerSize - 4 * $cellSize) . '" height="' . ($cornerSize - 4 * $cellSize) . '" fill="black"/>';
+            }
+
+            $svg .= '</svg>';
+
+            return response($svg)->header('Content-Type', 'image/svg+xml');
+        } catch (\Exception $e) {
+            Log::error('QR Generation Error: ' . $e->getMessage());
+            return response('QR Generation Failed', 500);
+        }
     }
 }

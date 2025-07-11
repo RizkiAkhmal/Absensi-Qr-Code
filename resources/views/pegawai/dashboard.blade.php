@@ -50,7 +50,7 @@
                             <i class="fas fa-clock fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Anda belum melakukan absensi hari ini</p>
                             <a href="{{ route('pegawai.qrcode') }}" class="btn btn-primary">
-                                <i class="fas fa-qrcode me-2"></i>Scan QR Code
+                                <i class="fas fa-qrcode me-2"></i>Lihat QR Code Saya
                             </a>
                         </div>
                     @endif
@@ -115,7 +115,7 @@
                         <div class="col-md-3 mb-3">
                             <a href="{{ route('pegawai.qrcode') }}" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-qrcode fa-2x d-block mb-2"></i>
-                                Scan QR Code
+                                QR Code Saya
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
